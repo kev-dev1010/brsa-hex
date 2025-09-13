@@ -2,16 +2,45 @@
 
 Backend para o sistema de gestão da BRSA, desenvolvido com Node.js, TypeScript e Arquitetura Hexagonal.
 
-## 1. Visão Geral da Arquitetura
+## 1. A Jornada de uma Requisição (Fluxo da Arquitetura)
 
-Este projeto utiliza a **Arquitetura Hexagonal (Portas e Adaptadores)**. O objetivo é isolar a lógica de negócio principal (o "core") das dependências externas, como o framework web (Express), o banco de dados, etc.
+Este projeto utiliza a **Arquitetura Hexagonal (Portas e Adaptadores)** para isolar a lógica de negócio das tecnologias externas. Abaixo, a jornada completa de uma requisição `POST /api/users`:
 
-O fluxo de uma requisição segue o seguinte caminho:
+### Estação 1: `main.ts` (O Ponto de Partida e o "Montador")
+- **O que faz?** Inicia e monta a aplicação, conectando todas as peças através da **Injeção de Dependência**.
+- **Como?**
+    1.  `new JsonUserRepository()`: Cria o adaptador que fala com o `users.json`.
+    2.  `new CreateUserUseCase(userRepository)`: Cria a lógica de negócio, injetando o repositório.
+    3.  `new UserController(createUserUseCase)`: Cria o controller, injetando a lógica de negócio.
+    4.  `createApiRouter(...)`: Monta o roteador principal com os controllers.
+    5.  `startServer(...)`: Inicia o servidor com as rotas prontas.
 
-`Requisição HTTP -> Rota (Express) -> Controller -> Caso de Uso (Use Case) -> Repositório (Interface) -> Implementação do Repositório -> Banco de Dados`
+### Estação 2: `server.ts` (O Porteiro)
+- **O que faz?** Cria e configura o servidor Express.
+- **Como?** Aplica middlewares globais (como `express.json()`) e anexa o roteador principal a um prefixo (ex: `/api`).
 
-- **Core (Domínio):** Contém a lógica de negócio pura, sem depender de nada externo.
-- **Infraestrutura:** Contém os "adaptadores" que implementam as "portas" definidas no core. É aqui que o Express, o acesso ao banco de dados e outras tecnologias vivem.
+### Estação 3: `routes/index.ts` (O Roteador Principal)
+- **O que faz?** Distribui as requisições para os roteadores de cada feature.
+- **Como?** Usa `router.use('/users', userRoutes)` para dizer: "requisições para `/users` devem ser gerenciadas pelo roteador de usuários".
+
+### Estação 4: `routes/user.routes.ts` (O Roteador da Feature)
+- **O que faz?** Define os caminhos e verbos HTTP para a feature de usuários.
+- **Como?** Mapeia um endpoint a um método do controller: `router.post('/', userController.createUser.bind(userController))`. O `.bind()` é crucial para manter o contexto do `this`.
+
+### Estação 5: `controllers/UserController.ts` (O Maestro)
+- **O que faz?** Orquestra a interação entre o mundo HTTP e a lógica de negócio.
+- **Como?** Recebe `req` e `res`, extrai dados (`req.body`), chama o caso de uso (`this.createUserUseCase.execute(...)`) e envia a resposta HTTP (`res.status(201).json(...)`).
+
+### Estação 6: `core/domain/useCases/CreateUserUseCase.ts` (O Cérebro)
+- **O que faz?** Executa a lógica de negócio pura, sem conhecer tecnologias externas.
+- **Como?** Recebe dados, aplica regras e usa a interface `IUserRepository` para persistir informações.
+
+### Estação 7: `core/ports/out/IUserRepository.ts` (O Contrato)
+- **O que faz?** É uma interface TypeScript que define o que um repositório de usuário *deve* fazer (ex: `save`), mas não *como*.
+
+### Estação 8: `infrastructure/adapters/database/JsonUserRepository.ts` (O Trabalhador)
+- **O que faz?** É a implementação do contrato `IUserRepository`.
+- **Como?** Sabe como ler e escrever dados em um arquivo JSON específico. Se trocarmos para MySQL, apenas este tipo de arquivo muda.
 
 ## 2. Estrutura de Diretórios
 
