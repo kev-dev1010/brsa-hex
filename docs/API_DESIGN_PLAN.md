@@ -89,4 +89,40 @@ Esta seção define a estrutura completa dos endpoints da API.
 
 ## 3. Plano de Implementação (Factories)
 
-*(Esta seção irá detalhar o passo a passo técnico da refatoração. Começaremos a preencher após definirmos o mapa de rotas.)*
+O objetivo desta seção é detalhar o plano técnico para refatorar a aplicação, permitindo que novas features (rotas, controllers, etc.) sejam adicionadas de forma modular e automática, sem a necessidade de alterar arquivos centrais.
+
+### Passo 1: Criação do Contêiner de Dependências
+
+- **O quê:** Centralizar a criação de todas as instâncias (repositórios, casos de uso, controllers) em um único local, conhecido como "Contêiner de Injeção de Dependência" (DI Container).
+- **Como:**
+    1. Criar um arquivo `src/container.ts`.
+    2. Neste arquivo, criar uma classe ou objeto `container` que terá a responsabilidade de instanciar e fornecer todas as classes da aplicação.
+    3. O `main.ts` será simplificado para apenas pedir as instâncias necessárias ao contêiner, em vez de criá-las.
+- **Objetivo:** Desacoplar o `main.ts` da lógica de construção dos objetos.
+
+### Passo 2: Padronização dos Módulos de Rota
+
+- **O quê:** Definir um contrato (interface) que todo módulo de rota deverá seguir.
+- **Como:**
+    1. Criar uma interface `IRouteModule` em um arquivo de tipos.
+    2. A interface exigirá que cada módulo de rota exponha:
+        - `path: string`: O caminho base do recurso (ex: `'/users'`).
+        - `getRouter(container: AppContainer): Router`: Uma função factory que recebe o contêiner, usa-o para obter o controller necessário e retorna um roteador Express configurado.
+- **Objetivo:** Criar um padrão consistente para todas as features.
+
+### Passo 3: Implementação do Carregador de Módulos (Module Loader)
+
+- **O quê:** Criar um mecanismo que descobre e carrega todos os módulos de rota automaticamente.
+- **Como:**
+    1. Criar um arquivo `src/infrastructure/web/routes/module.loader.ts`.
+    2. Este arquivo terá uma função que usa o módulo `fs` do Node.js para ler o nome de todos os arquivos no diretório de rotas.
+    3. Ele irá filtrar por arquivos que terminam em `.routes.ts`, importá-los dinamicamente (`await import(...)`), e extrair o `IRouteModule` de cada um.
+    4. O resultado será um array de todos os módulos de rota da aplicação.
+
+### Passo 4: Refatoração Final da Inicialização
+
+- **O quê:** Juntar todas as peças.
+- **Como:**
+    1. O `routes/index.ts` será modificado para usar o `ModuleLoader`. Ele vai iterar sobre o array de módulos e registrar cada um no roteador principal do Express usando `router.use(module.path, module.getRouter(container))`.
+    2. O `main.ts` final ficará extremamente simples: ele apenas irá instanciar o contêiner e iniciar o servidor.
+- **Objetivo:** Ter um sistema de "plug-and-play" para novas features. Para adicionar "Produtos", basta criar os arquivos da feature e o `product.routes.ts` seguindo o padrão. O sistema o carregará automaticamente.
