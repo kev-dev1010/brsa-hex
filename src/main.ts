@@ -1,26 +1,31 @@
-import { JsonUserRepository } from './infrastructure/adapters/database/JsonUserRepository';
-import { CreateUserUseCase } from './core/domain/useCases/CreateUserUseCase';
-import { UserController } from './infrastructure/adapters/web/controllers/UserController';
-import { AppController } from './infrastructure/adapters/web/controllers/AppController';
+// src/main.ts
+
+/**
+ * Ponto de entrada principal da aplicação.
+ * A responsabilidade deste arquivo é orquestrar a inicialização.
+ */
+
+import { container } from './container';
 import { createApiRouter } from './infrastructure/adapters/web/routes';
 import { startServer } from './infrastructure/server';
 
-// 1. Instanciar o Repositório (Adapter de Saída)
-const userRepository = new JsonUserRepository();
+// IIFE (Immediately Invoked Function Expression) assíncrona para usar await no top-level
+(async () => {
+  try {
+    console.log('Iniciando a montagem da aplicação...');
 
-// 2. Instanciar o Caso de Uso (Core) e injetar o repositório
-const createUserUseCase = new CreateUserUseCase(userRepository);
+    // 1. Cria o roteador da API, que agora é assíncrono devido ao carregamento dinâmico.
+    // Passamos o contêiner inteiro para ele.
+    const apiRouter = await createApiRouter(container);
 
-// 3. Instanciar os Controllers (Adapter de Entrada) e injetar os casos de uso
-const userController = new UserController(createUserUseCase);
-const appController = new AppController();
+    // 2. Inicia o servidor com o roteador pronto
+    const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+    startServer(apiRouter, PORT);
 
-// 4. Criar o roteador da API e injetar os controllers
-const apiRouter = createApiRouter(userController, appController);
+    console.log('Aplicação iniciada com sucesso.');
 
-// 5. Iniciar o servidor
-// (Boa prática: usar variáveis de ambiente para a porta)
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
-startServer(apiRouter, PORT);
-
-console.log('Application setup complete. Server is starting...');
+  } catch (error) {
+    console.error('Ocorreu um erro ao iniciar a aplicação:', error);
+    process.exit(1);
+  }
+})();
