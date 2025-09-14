@@ -1,8 +1,8 @@
 // src/core/domain/user/useCases/CreateUserUseCase.ts
 
 import { v4 as uuidv4 } from 'uuid';
-import { User, UserRole } from '../entities/user/User';
-import { IUserRepository } from '../../ports/out/IUserRepository';
+import { User, UserRole } from '../../../domain/entities/user/User';
+import { IUserRepository } from '../../../ports/out/IUserRepository';
 
 // Define o que o caso de uso espera receber para criar um usuário
 interface CreateUserRequest {

@@ -1,7 +1,7 @@
 // src/infrastructure/adapters/web/UserController.ts
 
 import { Request, Response } from 'express';
-import { CreateUserUseCase } from '../../../../core/domain/useCases/CreateUserUseCase';
+import { CreateUserUseCase } from '../../../../core/application/useCases/users/CreateUserUseCase';
 import { ICreateUserInPort } from '../../../../core/ports/in/ICreateUserInPort';
 
 export class UserController {

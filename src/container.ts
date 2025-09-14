@@ -10,7 +10,7 @@
 
 // Importações das classes que serão instanciadas
 import { JsonUserRepository } from './infrastructure/adapters/database/JsonUserRepository';
-import { CreateUserUseCase } from './core/domain/useCases/CreateUserUseCase';
+import { CreateUserUseCase } from './core/application/useCases/users/CreateUserUseCase';
 import { UserController } from './infrastructure/adapters/web/controllers/UserController';
 import { AppController } from './infrastructure/adapters/web/controllers/AppController';
 
