@@ -10,24 +10,41 @@
 
 // Importações das classes que serão instanciadas
 import { JsonUserRepository } from './infrastructure/adapters/database/JsonUserRepository';
-import { CreateUserUseCase } from './core/application/useCases/users/CreateUserUseCase';
+// Importa todos os casos de uso de uma só vez, aproveitando o index.ts
+import {
+  CreateUserUseCase,
+  DeleteUserUseCase,
+  GetAllUsersUseCase,
+  GetUserByIdUseCase,
+  UpdateUserUseCase,
+} from './core/application/useCases/users';
 import { UserController } from './infrastructure/adapters/web/controllers/UserController';
 import { AppController } from './infrastructure/adapters/web/controllers/AppController';
 
 // --- Repositórios ---
+// Instancia o repositório de usuário. Se trocarmos para MySQL, só mudamos aqui.
 const userRepository = new JsonUserRepository();
 
 // --- Casos de Uso ---
-const createUserUseCase = new CreateUserUseCase(userRepository);
+// Agrupa todos os casos de uso de usuário para facilitar a injeção no controller.
+const userUseCases = {
+  createUserUseCase: new CreateUserUseCase(userRepository),
+  getAllUsersUseCase: new GetAllUsersUseCase(userRepository),
+  getUserByIdUseCase: new GetUserByIdUseCase(userRepository),
+  updateUserUseCase: new UpdateUserUseCase(userRepository),
+  deleteUserUseCase: new DeleteUserUseCase(userRepository),
+};
 
 // --- Controllers ---
-const userController = new UserController(createUserUseCase);
+// Injeta o objeto com todos os casos de uso no controller de usuário.
+const userController = new UserController(userUseCases);
 const appController = new AppController();
 
 // Exporta uma instância única do contêiner para ser usada em toda a aplicação (Singleton)
 export const container = {
   userRepository,
-  createUserUseCase,
+  // Exporta o objeto de casos de uso para possível uso em outros lugares
+  userUseCases,
   userController,
   appController,
 };

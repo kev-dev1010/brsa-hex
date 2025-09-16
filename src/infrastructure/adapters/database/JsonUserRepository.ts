@@ -53,6 +53,27 @@ export class JsonUserRepository implements IUserRepository {
     return user || null;
   }
 
+  async findAll(): Promise<User[]> {
+    // Simplesmente retorna todos os usuários do arquivo JSON.
+    return this.getAllUsers();
+  }
+
+  async deleteById(id: string): Promise<void> {
+    let users = this.getAllUsers();
+    const initialLength = users.length;
+    
+    // Filtra a lista, mantendo apenas os usuários cujo ID não corresponde ao fornecido.
+    users = users.filter(u => u.id !== id);
+
+    // Se o tamanho da lista não mudou, o usuário não foi encontrado.
+    if (users.length === initialLength) {
+      // Embora o caso de uso já verifique, é uma boa prática ter essa segurança.
+      throw new Error('Usuário não encontrado para exclusão.');
+    }
+
+    this.saveAllUsers(users);
+  }
+
   private getAllUsers(): User[] {
     const data = readFileSync(this.filePath, 'utf-8');
     return JSON.parse(data);
